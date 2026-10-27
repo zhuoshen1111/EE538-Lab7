@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>EE538 Lab — Heaps and Hashing</title>
+<style>
+:root { color-scheme: light; --red: #990000; --ink: #202020; --line: #d8d8d8; }
+* { box-sizing: border-box; }
+body { margin: 0; color: var(--ink); background: #f4f4f4; font: 16px/1.5 Arial, sans-serif; }
+main { max-width: 1020px; margin: 28px auto; padding: 36px 48px; background: white; }
+header { border-bottom: 3px solid var(--red); padding-bottom: 12px; }
+h1,h2 { color: var(--red); line-height: 1.2; }
+h1 { font-size: 32px; margin: 10px 0; }
+h2 { font-size: 24px; margin: 30px 0 12px; }
+h3 { font-size: 18px; margin: 20px 0 8px; }
+p { margin: 10px 0; overflow-wrap: anywhere; }
+a { color: var(--red); }
+nav { display: flex; flex-wrap: wrap; gap: 8px 20px; margin: 18px 0; }
+li { margin: 6px 0; }
+code { font-family: Consolas, "Courier New", monospace; font-size: .92em; }
+pre { padding: 12px 15px; background: #f4f4f4; border-left: 3px solid #aaa; overflow-x: auto; line-height: 1.45; }
+pre code { font-size: 13px; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 15px; }
+th,td { border: 1px solid var(--line); padding: 9px 11px; text-align: left; vertical-align: top; overflow-wrap: anywhere; }
+th { background: #f3f3f3; }
+.examples { display: grid; grid-template-columns: 2fr 1fr; gap: 16px; }
+.examples p { margin-bottom: 0; }
+small { color: #555; }
+summary { cursor: pointer; font-weight: bold; }
+@media (max-width: 700px) { main { margin: 0; padding: 24px 18px; } h1 { font-size: 27px; } table { table-layout: fixed; font-size: 14px; } th,td { padding: 7px; } .examples { grid-template-columns: 1fr; gap: 0; } }
+@media print { @page { size: letter; margin: .65in; } body { background: white; font-size: 10pt; } main { margin: 0; padding: 0; } nav { display: none; } h1 { font-size: 23pt; } h2 { font-size: 16pt; } h3 { font-size: 12pt; } h1,h2,h3 { break-after: avoid; } table { font-size: 9pt; } tr,pre { break-inside: avoid; } pre { white-space: pre-wrap; overflow-wrap: anywhere; } pre code { font-size: 8.5pt; } }
+</style>
+</head>
+<body><main>
+<header>
+<small>EE538 · C++17 PROGRAMMING LAB</small>
+<h1>Heaps and Hashing</h1>
+<p><strong>Required:</strong> A. Binary min-heap · B. Chained hash table<br><strong>Optional extra credit:</strong> C. Log hash chain</p>
+</header>
+<nav aria-label="Contents"><a href="#start">Start</a><a href="#heap">A. Heap</a><a href="#hash">B. Hash table</a><a href="#chain">C. Log chain</a><a href="#checks">Checks and completion</a></nav>
+
+<section id="start">
+<h2>Start</h2>
+<p>Complete the TODOs in <code>src/min_heap.cpp</code> and <code>src/chained_hash_table.cpp</code>; complete <code>src/log_chain.cpp</code> only for extra credit. Use C++17 and the standard library. Keep the supplied interfaces, entry files, and tests unchanged. The classes are in namespace <code>lab</code>; constructors, accessors, and SHA-256 are provided. Your methods must not read input or print output.</p>
+<p><code>include/</code> declares classes and <code>src/</code> implements them. Each component uses its matching header/source pair. The heap and hash table are independent; only the log chain depends on the SHA-256 helper.</p>
+<p>From this folder, choose one program to compile and launch:</p>
+<pre><code># Min-heap
+g++ -std=c++17 -Wall -Wextra -Wpedantic -I include heap_main.cpp src/min_heap.cpp -o heap_demo.exe
+./heap_demo.exe</code></pre>
+<pre><code># Hash table
+g++ -std=c++17 -Wall -Wextra -Wpedantic -I include hash_table_main.cpp src/chained_hash_table.cpp -o hash_table_demo.exe
+./hash_table_demo.exe</code></pre>
+<pre><code># Optional log chain
+g++ -std=c++17 -Wall -Wextra -Wpedantic -I include log_chain_main.cpp src/log_chain.cpp src/sha256.cpp -o log_chain_demo.exe
+./log_chain_demo.exe</code></pre>
+<p>After launch, type or paste commands into the running program. There is no startup prompt. <strong><code>BUILD</code>, <code>PUT</code>, etc. are program input, not shell commands.</strong> No data files are needed. Use one uppercase command per line; blank lines are ignored. <code>HELP</code> lists commands; <code>QUIT</code> or end-of-input exits.</p>
+<p>Valid input is assumed; basic argument errors print <code>ERROR: message</code> and the session continues. Extra trailing tokens are ignored. Results go to standard output; successful commands print nothing unless a result is specified below. Unfinished methods print <code>ERROR: TODO: ...</code> until you implement them and rebuild. Changing test data does not require editing <code>main</code>.</p>
+</section>
+
+<section id="heap">
+<h2>A. Binary min-heap</h2>
+<p>Use the supplied <code>std::vector&lt;int&gt; data_</code>. Maintain <code>data_[(i - 1) / 2] &lt;= data_[i]</code> for every <code>i &gt; 0</code>. The root is the minimum; the array need not be sorted. Negative values and duplicates are valid.</p>
+<table><thead><tr><th>Method to implement</th><th>Requirement</th></tr></thead><tbody>
+<tr><td><code>build(values)</code></td><td>Replace the contents and build bottom-up in <strong>O(n)</strong>. An empty input clears the heap.</td></tr>
+<tr><td><code>push(value)</code></td><td>Insert one integer and sift upward; preserve existing values.</td></tr>
+<tr><td><code>pop()</code></td><td>Remove and return the minimum; replace the root with the last value and repair downward.</td></tr>
+<tr><td><code>top()</code></td><td>Return the minimum without changing the heap, in O(1).</td></tr>
+<tr><td><code>sift_up</code>, <code>sift_down</code></td><td>Implement the private repair helpers; choose the smaller child when moving downward.</td></tr>
+</tbody></table>
+<p><code>top()</code> and <code>pop()</code> on an empty heap must throw <code>std::out_of_range</code> without changing it; choose any exception message. Heap repair costs O(log n). Vector growth makes <code>push</code> amortized O(log n). Use vector storage and swaps; do not use <code>std::priority_queue</code>, STL heap algorithms, or sorting. Avoid unsigned underflow when iterating backward with <code>std::size_t</code>.</p>
+<p><strong>Commands:</strong> <code>BUILD n v1 ... vn</code> (nonnegative count; all values on the same line), <code>PUSH value</code>, <code>TOP</code>, <code>POP</code>, <code>SIZE</code>, <code>EMPTY</code>, <code>PRINT</code>, <code>CLEAR</code>, <code>HELP</code>, <code>QUIT</code>. <code>TOP</code>/<code>POP</code> print the value; <code>SIZE</code> prints the count; <code>EMPTY</code> prints <code>true</code>/<code>false</code>. <code>PRINT</code> shows the space-separated heap array, or a blank line if empty; valid layouts can differ.</p>
+<div class="examples"><div><p>Program input:</p><pre><code>BUILD 5 9 4 7 1 0
+TOP
+PUSH -2
+POP
+TOP
+QUIT</code></pre></div><div><p>Expected output:</p><pre><code>0
+-2
+0</code></pre></div></div>
+<p>Check empty/single-element heaps, duplicates, negatives, rebuilding, and interleaved pushes/pops. Repeated popping must produce nondecreasing values. Top-K is not part of this assignment.</p>
+</section>
+
+<section id="hash">
+<h2>B. Chained hash table</h2>
+<p>Map <code>std::string</code> keys to <code>int</code> values using the supplied <code>std::vector&lt;std::list&lt;Entry&gt;&gt;</code> with exactly <strong>seven buckets</strong>. <code>size_</code> counts entries, not buckets.</p>
+<table><thead><tr><th>Method to implement</th><th>Requirement</th></tr></thead><tbody>
+<tr><td><code>bucket_index(key)</code></td><td>Start at <code>h = 0</code>; for each <strong>unsigned byte</strong> <code>c</code>, set <code>h = (31 * h + c) % 7</code>. Return <code>h</code>.</td></tr>
+<tr><td><code>put(key, value)</code></td><td>Update an existing key without changing the size; otherwise append an entry to its chain and increment the size.</td></tr>
+<tr><td><code>find(key)</code></td><td>Return its value as <code>std::optional&lt;int&gt;</code>, or <code>std::nullopt</code> if absent. Do not modify the table.</td></tr>
+<tr><td><code>erase(key)</code></td><td>Remove only that key, decrement the size, and return <code>true</code>; if absent, return <code>false</code> without changes.</td></tr>
+</tbody></table>
+<p>Colliding keys are different entries: compare complete keys within a bucket. The empty key is valid (bucket 0); all integer values, including −1, are valid. Do not use a sentinel integer for missing values. Use the supplied lists, not <code>std::map</code>, <code>std::unordered_map</code>, or sets. No resizing or rehashing is required. Keys <code>a</code>, <code>h</code>, and <code>o</code> all map to bucket 6.</p>
+<p><strong>Commands:</strong> <code>PUT key value</code>, <code>FIND key</code> (prints value or <code>NOT_FOUND</code>), <code>ERASE key</code> (prints <code>true</code>/<code>false</code>), <code>BUCKET key</code> (prints index), <code>SIZE</code>, <code>EMPTY</code>, <code>CLEAR</code>, <code>HELP</code>, <code>QUIT</code>.</p>
+<p>Keys and log records use <code>std::quoted</code>: a bare word or double-quoted text, including <code>""</code> for empty text. For example, <code>PUT "first name" 12</code>. Within quotes, <code>\"</code> and <code>\\</code> escape a quote and backslash. C-style <code>\n</code>/<code>\0</code> do not become control bytes; use C++ API tests for binary strings.</p>
+<div class="examples"><div><p>Program input:</p><pre><code>PUT a 10
+PUT h 20
+PUT o 30
+PUT h 25
+FIND h
+ERASE h
+FIND h
+FIND o
+SIZE
+QUIT</code></pre></div><div><p>Expected output:</p><pre><code>25
+true
+NOT_FOUND
+30
+2</code></pre></div></div>
+<p>Check collisions, updates, missing/empty keys, and deletion at the beginning, middle, and end of a chain. Surviving entries must remain accessible.</p>
+</section>
+
+<section id="chain">
+<h2>C. Log hash chain — optional extra credit</h2>
+<p>Use the provided <code>lab::crypto::hash_record(previous, record)</code> helper:</p>
+<pre><code>d0 = 32 zero bytes
+di = SHA256(d(i−1) || record_i)</code></pre>
+<p>Concatenate the <strong>32 raw digest bytes</strong> and exact record bytes, not a hexadecimal digest string. Add no separators, newline, or terminating NUL. Records are <code>std::string</code>; textual records use UTF-8. Empty records and embedded NUL bytes are valid. The initial digest is not SHA-256 of an empty string.</p>
+<table><thead><tr><th>Method to implement</th><th>Requirement</th></tr></thead><tbody>
+<tr><td><code>append(record)</code></td><td>Hash the previous digest and new record, then store both in a <code>LogEntry</code>. Use <code>initial_digest()</code> before the first record.</td></tr>
+<tr><td><code>final_digest()</code></td><td>Return the last digest, or <code>initial_digest()</code> if empty.</td></tr>
+<tr><td><code>verify(entries, trusted_final)</code></td><td>Recompute in order from the initial digest. Check every stored digest and the final result against the trusted anchor; return <code>false</code> on any mismatch. An empty chain passes only with the zero initial anchor.</td></tr>
+</tbody></table>
+<p><strong>Commands:</strong> <code>APPEND record</code>, <code>DIGEST</code> (prints 64 hex characters), <code>SAVE</code>, <code>VERIFY</code>, <code>CHECK_EDIT index record</code>, <code>SIZE</code>, <code>EMPTY</code>, <code>CLEAR</code>, <code>HELP</code>, <code>QUIT</code>.</p>
+<p><code>SAVE</code> silently stores the current final digest <strong>in memory</strong>; it writes no file. <code>VERIFY</code> and <code>CHECK_EDIT</code> require this saved anchor and print <code>true</code>/<code>false</code>. <code>CHECK_EDIT</code> changes a zero-based record in a temporary copy, leaving the original unchanged. <code>APPEND</code> does not update the anchor: verification fails after appending until you deliberately save again. <code>CLEAR</code> clears both log and anchor.</p>
+<div class="examples"><div><p>Program input:</p><pre><code>APPEND "Alice pays Bob 10"
+APPEND "Bob pays Carol 4"
+SAVE
+VERIFY
+CHECK_EDIT 0 "Alice pays Bob 100"
+VERIFY
+QUIT</code></pre></div><div><p>Expected output:</p><pre><code>true
+false
+true</code></pre></div></div>
+<p>Check changed records/digests, deletion, reordering, and rewritten chains with all later digests recomputed. A rewritten chain must fail against the <em>original trusted final digest</em>. Keep that anchor separately from editable history: the chain detects changes against it, but does not prevent edits, encrypt records, or authenticate the writer.</p>
+</section>
+
+<section id="checks">
+<h2>Checks and completion</h2>
+<p>Run each completed program and the supplied checks below. Add at least one of your own test cases per required component, using terminal commands or a separate C++ API test. Record the expected and actual results and answer the questions in <a href="Readme.md">Readme.md</a>. You may leave the optional TODOs unchanged.</p>
+<p>Each test source has its own <code>main()</code>; do not combine it with a program entry file. These basic checks do not replace your own cases or establish the required implementation strategy and complexity. Tests return a nonzero status on failure.</p>
+<details><summary>Compile and run the supplied checks (11 required, 4 helper, 6 optional)</summary>
+<pre><code># Required heap and hash-table checks: 11 cases
+ g++ -std=c++17 -Wall -Wextra -Wpedantic -I include src/min_heap.cpp src/chained_hash_table.cpp tests/lab_tests.cpp -o lab_tests.exe
+ ./lab_tests.exe
+
+# Provided SHA-256 helper: 4 cases; should pass immediately
+ g++ -std=c++17 -Wall -Wextra -Wpedantic -I include src/sha256.cpp tests/test_sha256.cpp -o test_sha256.exe
+ ./test_sha256.exe
+
+# Optional log chain: 6 cases
+ g++ -std=c++17 -Wall -Wextra -Wpedantic -I include src/sha256.cpp src/log_chain.cpp tests/extra_credit_tests.cpp -o extra_credit_tests.exe
+ ./extra_credit_tests.exe</code></pre>
+</details>
+<details><summary>Optional CMake build</summary>
+<pre><code>cmake -S . -B build -DBUILD_TESTING=ON -DLAB_ENABLE_EXTRA_CREDIT=ON
+cmake --build build --config Debug
+ctest --test-dir build -C Debug --output-on-failure</code></pre>
+<p>Requires CMake 3.20+. Omit <code>-DLAB_ENABLE_EXTRA_CREDIT=ON</code> to skip the optional program/tests. Without either flag, the default build includes only the two required programs.</p>
+</details>
+</section>
+</main></body></html>
